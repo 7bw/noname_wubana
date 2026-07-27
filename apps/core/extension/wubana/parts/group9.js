@@ -706,7 +706,7 @@ export const skill = {
 			},
 		},
 	},
-	// 篱下：锁定技，出牌阶段你至多使用X张牌（X为体力值）；使用锦囊牌后结束出牌阶段。
+	// 篱下：锁定技，出牌阶段你至多使用X张牌（X为体力值）。
 	wba_lixia: {
 		locked: true,
 		trigger: { player: "useCard2" },
@@ -718,10 +718,7 @@ export const skill = {
 				return false;
 			}
 			const used = player.getHistory("useCard", evt => !!evt.getParent("phaseUse")).length;
-			if (used >= Math.max(1, player.getHp())) {
-				return true;
-			}
-			return get.type(event.card, null, false) === "trick";
+			return used >= Math.max(1, player.getHp());
 		},
 		async content(event, trigger, player) {
 			const pu = trigger.getParent("phaseUse");
@@ -777,5 +774,5 @@ export const translate = {
 	wba_heirenpaipiqiu: "黑人拍皮球",
 	wba_heirenpaipiqiu_info: "锁定技，黑色锦囊牌对你无效，你的黑色伤害类锦囊造成的伤害+1。",
 	wba_lixia: "篱下",
-	wba_lixia_info: "锁定技，出牌阶段，你至多使用X张牌（X为你的体力值）。你使用锦囊牌后，结束出牌阶段。",
+	wba_lixia_info: "锁定技，出牌阶段，你至多使用X张牌（X为你的体力值）。",
 };

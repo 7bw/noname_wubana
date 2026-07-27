@@ -518,7 +518,7 @@ export const skill = {
 			}
 		},
 	},
-	// 向阳：锁定技，红色【杀】视为【火杀】且不可被【闪】；每造成一次伤害，回复1点体力并从牌堆随机获得一张基本牌。
+	// 向阳：锁定技，红色【杀】视为【火杀】且无视距离限制、不可被【闪】；每造成一次伤害，回复1点体力并从牌堆随机获得一张基本牌。
 	wba_xiangyang: {
 		locked: true,
 		group: ["wba_xiangyang_fire", "wba_xiangyang_gain"],
@@ -527,6 +527,13 @@ export const skill = {
 				trigger: { player: "useCard" },
 				forced: true,
 				locked: true,
+				mod: {
+					targetInRange(card, player, target) {
+						if (card.name === "sha" && get.color(card, player) === "red") {
+							return true;
+						}
+					},
+				},
 				filter(event, player) {
 					return event.card && event.card.name === "sha" && get.color(event.card, player) === "red";
 				},
@@ -535,7 +542,7 @@ export const skill = {
 					if (trigger.directHit) {
 						trigger.directHit.addArray(game.players);
 					}
-					game.log(player, "的红色【杀】视为【火杀】且不可被【闪】抵消");
+					game.log(player, "的红色【杀】视为【火杀】且无视距离限制、不可被【闪】抵消");
 				},
 			},
 			gain: {
@@ -599,7 +606,7 @@ export const translate = {
 	wba_zibi: "自闭",
 	wba_zibi_info: "其他角色的结束阶段，若本回合没有角色受到过伤害，你可以从弃牌堆中随机获得一张基本牌。",
 	wba_xiangyang: "向阳",
-	wba_xiangyang_info: "锁定技，你的红色【杀】视为【火杀】且不能被【闪】抵消。你每造成一次伤害，回复1点体力并从牌堆中随机获得一张基本牌。",
+	wba_xiangyang_info: "锁定技，你的红色【杀】视为【火杀】且无视距离限制、不能被【闪】抵消。你每造成一次伤害，回复1点体力并从牌堆中随机获得一张基本牌。",
 	wba_xiangyang_fire: "向阳",
 	wba_xiangyang_gain: "向阳",
 };
