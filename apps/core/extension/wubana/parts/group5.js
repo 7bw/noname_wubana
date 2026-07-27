@@ -9,49 +9,49 @@ export const character = {
 	// 1) 邱昊嵘
 	wba_qiuhaorong: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_mofang", "wba_xinsheng"],
 	},
 	// 2) 宋轶健
 	wba_songyijian: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_xuewei", "wba_buwei"],
 	},
 	// 3) 徐家澍
 	wba_xujiashu: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_cool", "wba_chifan"],
 	},
 	// 4) 徐施舟
 	wba_xushizhou: {
 		sex: "male",
-		group: "wu",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_xiuxian1", "wba_xiaoyan"],
 	},
 	// 5) 许盛杰
 	wba_xushengjie: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_xiuxian2", "wba_zhonger"],
 	},
 	// 6) 刘阳河
 	wba_liuyanghe: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_feizhou", "wba_dahe"],
 	},
 	// 7) 宋沼（初始只有“装逼”与“八天八夜”，“一向是第一”由八天八夜切换获得）
 	wba_songzhao: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_zhuangbi", "wba_batian"],
 	},
@@ -94,10 +94,7 @@ export const skill = {
 			if (event.triggername === "gameStart") {
 				event.result = { bool: true };
 			} else {
-				event.result = await player
-					.chooseBool(get.prompt2("wba_mofang"))
-					.set("frequentSkill", "wba_mofang")
-					.forResult();
+				event.result = await player.chooseBool(get.prompt2("wba_mofang")).forResult();
 			}
 		},
 		async content(event, trigger, player) {
@@ -195,10 +192,7 @@ export const skill = {
 			return event.num;
 		},
 		async cost(event, trigger, player) {
-			event.result = await player
-				.chooseBool(get.prompt2("wba_xinsheng"))
-				.set("frequentSkill", "wba_xinsheng")
-				.forResult();
+			event.result = await player.chooseBool(get.prompt2("wba_xinsheng")).forResult();
 		},
 		async content(event, trigger, player) {
 			// 若“模仿”尚未初始化则先初始化数组
@@ -228,10 +222,7 @@ export const skill = {
 	wba_xuewei: {
 		trigger: { player: "phaseZhunbeiBegin" },
 		async cost(event, trigger, player) {
-			event.result = await player
-				.chooseBool(get.prompt2("wba_xuewei"))
-				.set("frequentSkill", "wba_xuewei")
-				.forResult();
+			event.result = await player.chooseBool(get.prompt2("wba_xuewei")).forResult();
 		},
 		async content(event, trigger, player) {
 			const result = await player.judge().forResult();
@@ -251,10 +242,7 @@ export const skill = {
 					return event.card && get.type2(event.card) === type;
 				},
 				async cost(event, trigger, player) {
-					event.result = await player
-						.chooseBool("学委：是否摸一张牌？")
-						.set("frequentSkill", event.skill)
-						.forResult();
+					event.result = await player.chooseBool("学委：是否摸一张牌？").forResult();
 				},
 				async content(event, trigger, player) {
 					await player.draw();
@@ -271,14 +259,14 @@ export const skill = {
 		limited: true,
 		skillAnimation: true,
 		animationColor: "gray",
-		trigger: { player: "loseAfter", global: "loseAsyncAfter" },
+		trigger: { player: "loseEnd" },
 		filter(event, player) {
 			if (player.countCards("h") !== 0) {
 				return false;
 			}
-			// 此事件确实使你失去了手牌
-			const evt = event.getl(player);
-			return evt && evt.player === player && evt.hs && evt.hs.length > 0;
+			// 与标准包“空城”(kongcheng1) 同款判定：直接读取本次失去的牌是否包含原本在手牌区的牌，
+			// 不依赖 getl()/getlx 的边缘语义，可在回合内外任何情况下可靠触发。
+			return (event.cards || []).some(c => c.original === "h");
 		},
 		async cost(event, trigger, player) {
 			event.result = await player.chooseBool(get.prompt2("wba_buwei")).forResult();
@@ -299,10 +287,7 @@ export const skill = {
 			return event.num > 0 && event.player && event.player.isIn();
 		},
 		async cost(event, trigger, player) {
-			event.result = await player
-				.chooseBool(get.prompt2("wba_cool"))
-				.set("frequentSkill", "wba_cool")
-				.forResult();
+			event.result = await player.chooseBool(get.prompt2("wba_cool")).forResult();
 		},
 		async content(event, trigger, player) {
 			player.say("cool");
@@ -342,10 +327,7 @@ export const skill = {
 		trigger: { player: "phaseJieshuBegin" },
 		group: ["wba_skipturn"],
 		async cost(event, trigger, player) {
-			event.result = await player
-				.chooseBool(get.prompt2("wba_xiuxian1"))
-				.set("frequentSkill", "wba_xiuxian1")
-				.forResult();
+			event.result = await player.chooseBool(get.prompt2("wba_xiuxian1")).forResult();
 		},
 		async content(event, trigger, player) {
 			await player.draw(3);
@@ -415,10 +397,7 @@ export const skill = {
 		trigger: { player: "phaseDiscardBegin" },
 		group: ["wba_skipturn"],
 		async cost(event, trigger, player) {
-			event.result = await player
-				.chooseBool(get.prompt2("wba_xiuxian2"))
-				.set("frequentSkill", "wba_xiuxian2")
-				.forResult();
+			event.result = await player.chooseBool(get.prompt2("wba_xiuxian2")).forResult();
 		},
 		async content(event, trigger, player) {
 			// 在弃牌阶段开始时取消该阶段（跳过弃牌阶段）
@@ -557,10 +536,7 @@ export const skill = {
 	wba_zhuangbi: {
 		trigger: { player: "phaseJieshuBegin" },
 		async cost(event, trigger, player) {
-			event.result = await player
-				.chooseBool(get.prompt2("wba_zhuangbi"))
-				.set("frequentSkill", "wba_zhuangbi")
-				.forResult();
+			event.result = await player.chooseBool(get.prompt2("wba_zhuangbi")).forResult();
 		},
 		async content(event, trigger, player) {
 			const num = game.countPlayer(cur => cur.countCards("h") >= player.countCards("h"));

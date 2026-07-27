@@ -11,56 +11,56 @@ export const character = {
 	// 1. 李博为·管乐队
 	wba_libowei_band: {
 		sex: "male",
-		group: "wei",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_canyan", "wba_zouyue"],
 	},
 	// 2. 杜时宇·管乐队
 	wba_dushiyu_band: {
 		sex: "male",
-		group: "wei",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_canyan", "wba_jigu"],
 	},
 	// 3. 陈嘉豪·足球队
 	wba_chenjiahao_soccer: {
 		sex: "male",
-		group: "shu",
+		group: "xue",
 		hp: 5,
 		skills: ["wba_changqu", "wba_angyang"],
 	},
 	// 4. 徐施舟·足球队
 	wba_xushizhou_soccer: {
 		sex: "male",
-		group: "shu",
+		group: "xue",
 		hp: 5,
 		skills: ["wba_changqu", "wba_benxi"],
 	},
 	// 5. sp陈翼
 	wba_sp_chenyi: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_xiaocao", "wba_xidu_sp"],
 	},
 	// 6. 七只猪
 	wba_qizhizhu: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 7,
 		skills: ["wba_beia", "wba_ritian"],
 	},
 	// 7. sp许盛杰
 	wba_sp_xushengjie: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_rumian", "wba_qingxing"],
 	},
 	// 8. 刘阳河·界限突破
 	wba_liuyanghe_jx: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_sheying"],
 	},
@@ -703,7 +703,7 @@ export const skill = {
 		subSkill: {
 			return: {
 				// 归还时机：你使用了借来的技能 / 你对来源造成伤害 / 你或来源死亡
-				trigger: { player: ["damageSource", "useSkillAfter", "dieAfter"], global: "dieAfter" },
+				trigger: { source: "damageSource", player: ["useSkillAfter", "logSkill"], global: "dieAfter" },
 				forced: true,
 				forceDie: true,
 				popup: false,
@@ -720,7 +720,7 @@ export const skill = {
 					if (event.name == "damage") {
 						return storage.some(info => info.source == event.player);
 					}
-					// useSkill 事件（useSkillAfter 时机）：你使用了借来的技能
+					// useSkill/logSkill 事件：你使用了借来的技能（logSkill 覆盖被动触发技，useSkillAfter 覆盖主动技，二者都不可少）
 					return storage.some(info => info.skill == event.skill);
 				},
 				async content(event, trigger, player) {

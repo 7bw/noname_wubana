@@ -7,25 +7,25 @@ import { lib, game, ui, get, ai, _status } from "noname";
 
 export const character = {
 	// 1) 蔡晶君
-	wba_caijingjun: { sex: "female", group: "qun", hp: 3, skills: ["wba_nalilai", "wba_naliqu"] },
+	wba_caijingjun: { sex: "female", group: "shi", hp: 3, skills: ["wba_nalilai", "wba_naliqu"] },
 	// 2) 高雯
-	wba_gaowen: { sex: "female", group: "qun", hp: 3, skills: ["wba_kuangxiao", "wba_yusu"] },
+	wba_gaowen: { sex: "female", group: "xue", hp: 3, skills: ["wba_kuangxiao", "wba_yusu"] },
 	// 3) 朱敏惠
-	wba_zhuminhui: { sex: "female", group: "qun", hp: 3, skills: ["wba_jingyan", "wba_shuxue"] },
+	wba_zhuminhui: { sex: "male", group: "shi", hp: 3, skills: ["wba_jingyan", "wba_shuxue"] },
 	// 4) 田雨竹
-	wba_tianyuzhu: { sex: "female", group: "qun", hp: 4, skills: ["wba_tuanzhi", "wba_tianshu"] },
+	wba_tianyuzhu: { sex: "female", group: "xue", hp: 4, skills: ["wba_tuanzhi", "wba_tianshu"] },
 	// 5) 徐薇
-	wba_xuwei: { sex: "female", group: "qun", hp: 3, skills: ["wba_kouwu", "wba_jushou"] },
+	wba_xuwei: { sex: "female", group: "shi", hp: 3, skills: ["wba_kouwu", "wba_jushou"] },
 	// 6) 杜任娟
-	wba_durenjuan: { sex: "female", group: "qun", hp: 8, skills: ["wba_faxing", "wba_xining", "wba_biede"] },
+	wba_durenjuan: { sex: "female", group: "shi", hp: 8, skills: ["wba_faxing", "wba_xining", "wba_biede"] },
 	// 7) 杨雨晨
-	wba_yangyuchen: { sex: "male", group: "qun", hp: 4, skills: ["wba_wumi", "wba_shiwumi"] },
+	wba_yangyuchen: { sex: "female", group: "xue", hp: 4, skills: ["wba_wumi", "wba_shiwumi"] },
 	// 8) 茅家俊
-	wba_maojiajun: { sex: "male", group: "qun", hp: 4, skills: ["wba_duanlian", "wba_chengnian"] },
-	// 9) mym
-	wba_mym: { sex: "male", group: "qun", hp: 3, skills: ["wba_kunqian", "wba_mizhinianling"] },
+	wba_maojiajun: { sex: "male", group: "shi", hp: 4, skills: ["wba_duanlian", "wba_chengnian"] },
+	// 9) 茅艳梅
+	wba_mym: { sex: "female", group: "shi", hp: 3, skills: ["wba_kunqian", "wba_mizhinianling"] },
 	// 10) 李安康
-	wba_liankang: { sex: "male", group: "qun", hp: 4, skills: ["wba_liuziping", "wba_kanyixiazi"] },
+	wba_liankang: { sex: "male", group: "shi", hp: 4, skills: ["wba_liuziping", "wba_kanyixiazi"] },
 };
 
 export const skill = {
@@ -302,12 +302,12 @@ export const skill = {
 	},
 
 	// ==================== 6) 杜任娟 ====================
-	// 发型崩坏：每当一个回合结束时，若你体力值为全场唯一最高，你须减1点体力或1点体力上限。
+	// 发型崩坏：每当你的回合结束时，若你体力值为场上最高，你须减1点体力或1点体力上限。
 	wba_faxing: {
-		trigger: { global: "phaseJieshuBegin" },
+		trigger: { player: "phaseJieshuBegin" },
 		forced: true,
 		filter(event, player) {
-			return player.isAlive() && !game.hasPlayer(cur => cur !== player && cur.hp >= player.hp);
+			return player.isAlive() && !game.hasPlayer(cur => cur !== player && cur.hp > player.hp);
 		},
 		async content(event, trigger, player) {
 			const result = await player
@@ -721,7 +721,7 @@ export const translate = {
 	wba_durenjuan: "杜任娟",
 	wba_yangyuchen: "杨雨晨",
 	wba_maojiajun: "茅家俊",
-	wba_mym: "mym",
+	wba_mym: "茅艳梅",
 	wba_liankang: "李安康",
 
 	// —— 技能名 & 描述 ——
@@ -752,7 +752,7 @@ export const translate = {
 	wba_jushou_info: "出牌阶段限一次，你可以指定一名其他角色，抽取其一张手牌，或视为对其使用一张【杀】。",
 
 	wba_faxing: "发型崩坏",
-	wba_faxing_info: "每当一个回合结束时，若你的体力值为全场唯一最高，你须减少1点体力或1点体力上限。",
+	wba_faxing_info: "每当你的回合结束时，若你的体力值为场上最高，你须减少1点体力或1点体力上限。",
 	wba_xining: "侬则西宁",
 	wba_xining_info: "锁定技，你使用【杀】无距离限制。",
 	wba_biede: "还有别的伐",

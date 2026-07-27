@@ -8,14 +8,18 @@ import * as group6 from "./parts/group6.js";
 import * as group7 from "./parts/group7.js";
 import * as group8 from "./parts/group8.js";
 import * as group9 from "./parts/group9.js";
+import * as group10 from "./parts/group10.js";
 
-const groups = [group1, group2, group3, group4, group5, group6, group7, group8, group9];
+const groups = [group1, group2, group3, group4, group5, group6, group7, group8, group9, group10];
 
-// 新增势力：研(yan) / 工(gong) / 游(you)，以及“调班”动态转换的 阳(yang) / 阴(yin)
+// 新增势力：研(yan) / 工(gong) / 游(you) / 师(shi) / 学(xue)，以及“调班”动态转换的 阳(yang) / 阴(yin)
+// 注：神(shen) 势力复用引擎自带的 shen 分组，无需在此注册。
 const wubanaGroups = {
 	yan: { name: "研", nature: "thunder" },
 	gong: { name: "工", nature: "wood" },
 	you: { name: "游", nature: "water" },
+	shi: { name: "师", nature: "soil" },
+	xue: { name: "学", nature: "qun" },
 	yang: { name: "阳", nature: "fire" },
 	yin: { name: "阴", nature: "shen" },
 };
@@ -62,11 +66,11 @@ export default function () {
 				translate,
 				connect: true,
 			},
-			intro: "五班同学主题DIY武将扩展，包含sp、神、球队/乐队、研/工/游三势力及原版共51名武将。",
+			intro: "五班同学主题DIY武将扩展，包含研/工/游/神/师/学六个自定义势力，共57名武将。",
 			author: "五班",
 			diskURL: "",
 			forumURL: "",
-			version: "1.2",
+			version: "1.3",
 		},
 		files: { character: [], card: [], skill: [], audio: [] },
 	};

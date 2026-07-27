@@ -3,25 +3,25 @@ import { lib, game, ui, get, ai, _status } from "noname";
 export const character = {
 	wba_sp_hezhizhao: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_nongfu", "wba_lvdongbin", "wba_gouwanglei"],
 	},
 	wba_sp_xujiashu: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_bolan", "wba_zifen"],
 	},
 	wba_sp_songyijian: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_tuili", "wba_mingduan"],
 	},
 	wba_sp_huangyanrui: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_cunliang", "wba_bushi", "wba_shizong"],
 	},

@@ -8,7 +8,7 @@ import { lib, game, ui, get, ai, _status } from "noname";
 
 export const character = {
 	wba_yan_dushiyu: { sex: "male", group: "yan", hp: 4, skills: ["wba_shiyan", "wba_baichuan"] },
-	wba_yan_xujiashu: { sex: "male", group: "yan", hp: 3, skills: ["wba_xiaobenshengyi", "wba_fbi"], img: "extension/wubana/yan_xujiashu.jpg" },
+	wba_yan_xujiashu: { sex: "male", group: "yan", hp: 4, skills: ["wba_xiaobenshengyi", "wba_fbi"], img: "extension/wubana/yan_xujiashu.jpg" },
 	wba_yan_libowei: { sex: "male", group: "yan", hp: 4, skills: ["wba_kuhan", "wba_zibi"] },
 };
 

@@ -6,8 +6,8 @@ import { lib, game, ui, get, ai, _status } from "noname";
  * 含多个“协力技”（跨回合结算）与“延迟”盖置牌机制。
  */
 
-// 赤史“智囊牌名”参考列表（常见非伤害类普通锦囊/延时锦囊）
-const WBA_ZHINANG = ["wuzhong", "shunshou", "guohe", "wugu", "taoyuan", "jiedao", "tiesuo", "lebu", "bingliang", "wuxie", "zhijizhibi", "yiyidailao", "zhiji", "yiyi"];
+// 赤史“智囊牌”：过河拆桥、无懈可击、无中生有
+const WBA_ZHINANG = ["guohe", "wuxie", "wuzhong"];
 
 // 判断一次使用是否为“非虚拟非转化”的实体锦囊
 function wbaRealTrick(event) {
@@ -105,6 +105,10 @@ export const skill = {
 				return (storage || []).length;
 			},
 			content(storage, player) {
+				// “暗置”记录，仅本人可见具体牌名，其他玩家只能看到已暗置的数量
+				if (player !== game.me && !_status.video) {
+					return "已暗置记录了一些锦囊牌名，具体内容仅" + get.translation(player) + "本人可见";
+				}
 				const s = player.storage.wba_tongzhi || [];
 				return s.length ? "已记录牌名：" + s.map(n => get.translation(n)).join("、") : "未记录牌名";
 			},
@@ -390,20 +394,15 @@ export const skill = {
 	/* ============ 游杜时宇 ============ */
 	// 延迟：出牌阶段，你可以将手牌盖置于武将牌上（不选目标、不结算、不计入次数）；结束阶段依序翻开并结算。
 	wba_yanchi: {
-		enable: "phaseUse",
-		filterCard: true,
-		selectCard: 1,
-		position: "h",
-		discard: false,
-		lose: false,
+		locked: true,
+		trigger: { player: "useCardBegin" },
+		forced: true,
 		filter(event, player) {
-			return player.countCards("h") > 0;
-		},
-		check(card) {
-			return get.value(card) <= 6 ? 6 - get.value(card) : 0.1 + (get.tag(card, "damage") ? 3 : 0);
+			return get.position(event.card) === "h" && !!event.getParent("phaseUse");
 		},
 		async content(event, trigger, player) {
-			const card = event.cards[0];
+			const card = trigger.card;
+			trigger.cancel();
 			if (!player.storage.wba_yanchi_list) {
 				player.storage.wba_yanchi_list = [];
 			}
@@ -412,7 +411,7 @@ export const skill = {
 			await next;
 			player.storage.wba_yanchi_list.push(card);
 			player.markSkill("wba_yanchi");
-			game.log(player, "将一张牌“延迟”盖置于武将牌上");
+			game.log(player, "将", card, "“延迟”盖置于武将牌上");
 		},
 		group: ["wba_yanchi_resolve"],
 		marktext: "延",
@@ -424,10 +423,6 @@ export const skill = {
 				const n = player.getExpansions("wba_yanchi").length;
 				return n ? "武将牌上盖置了" + get.cnNumber(n) + "张“延迟”牌" : "没有“延迟”牌";
 			},
-		},
-		ai: {
-			order: 1,
-			result: { player: 1 },
 		},
 		subSkill: {
 			resolve: {
@@ -678,7 +673,7 @@ export const skill = {
 	// 黑人拍皮球：锁定技，黑色锦囊牌对你无效；你的黑色伤害类锦囊造成的伤害+1。
 	wba_heirenpaipiqiu: {
 		locked: true,
-		group: ["wba_heiren_immune", "wba_heiren_damage"],
+		group: ["wba_heirenpaipiqiu_immune", "wba_heirenpaipiqiu_damage"],
 		subSkill: {
 			immune: {
 				trigger: { target: "useCardToTargeted" },
@@ -766,7 +761,7 @@ export const translate = {
 
 	/* 游杜时宇 */
 	wba_yanchi: "延迟",
-	wba_yanchi_info: "锁定技，出牌阶段，你使用的手牌不选择目标且不执行结算，改为依序背面朝上盖置于你的武将牌上（以此法盖置【杀】不计入次数限制）。你的回合结束阶段开始时，你将“延迟”盖置的牌依序翻开，为其选择合法目标并依次结算；若无法指定有效目标，则直接置入弃牌堆。（实现为出牌阶段主动盖置手牌）",
+	wba_yanchi_info: "锁定技，出牌阶段，你使用的手牌不选择目标且不执行结算，改为依序背面朝上盖置于你的武将牌上（以此法盖置【杀】不计入次数限制）。你的回合结束阶段开始时，你将“延迟”盖置的牌依序翻开，为其选择合法目标并依次结算；若无法指定有效目标，则直接置入弃牌堆。",
 	wba_yanchi_resolve: "延迟",
 	wba_qiaojiang: "巧匠",
 	wba_qiaojiang_info: "回合结束阶段，每当一张“延迟”盖置的牌被翻开并成功执行结算后，你可以选择一名其他角色从牌堆中获得一张相同类型的牌加入手牌。若该牌为装备牌，该角色可选择将其直接置入装备区。",

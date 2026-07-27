@@ -2,17 +2,17 @@ import { lib, game, ui, get, ai, _status } from "noname";
 
 /**
  * 五班阿扩展 —— 第八组：工（gong）势力武将（换位置主题）
- * 工大黄、工宋轶健
+ * 工黄彦瑞、工宋轶健
  * “奶”统一使用扩展标记 wba_nai（置于某角色武将牌上）；wba_nai_mark 为其显示载体技能。
  */
 
 export const character = {
 	wba_gong_dahuang: { sex: "male", group: "gong", hp: 3, skills: ["wba_duwu", "wba_siren", "wba_chuchai"] },
-	wba_gong_songyijian: { sex: "male", group: "gong", hp: 3, skills: ["wba_diaoban", "wba_baiban", "wba_yeban"] },
+	wba_gong_songyijian: { sex: "male", group: "gong", hp: 4, skills: ["wba_diaoban", "wba_baiban", "wba_yeban"] },
 };
 
 export const skill = {
-	/* ============ 工大黄 ============ */
+	/* ============ 工黄彦瑞 ============ */
 	// 睹物：受到伤害时可判定，将判定牌置于一名角色武将牌上称为“奶”，该角色体力上限+1。
 	wba_duwu: {
 		trigger: { player: "damageEnd" },
@@ -77,6 +77,7 @@ export const skill = {
 			const cards = player.getExpansions("wba_nai");
 			if (cards.length) {
 				player.loseToDiscardpile(cards);
+				player.loseMaxHp(cards.length);
 			}
 		},
 	},
@@ -105,6 +106,7 @@ export const skill = {
 			}
 			const type = get.type2(chosen);
 			await target.loseToDiscardpile([chosen]);
+			await target.loseMaxHp();
 			game.log(target, "移去了一张“奶”");
 			if (target.sex === "female") {
 				await target.gainMaxHp();
@@ -198,6 +200,7 @@ export const skill = {
 			player.awakenSkill("wba_chuchai");
 			const nai = player.getExpansions("wba_nai").slice(0, 3);
 			await player.loseToDiscardpile(nai);
+			await player.loseMaxHp(nai.length);
 			player.line(event.target, "green");
 			game.swapSeat(player, event.target);
 			game.log(player, "与", event.target, "交换了座次");
@@ -317,10 +320,6 @@ export const skill = {
 			if (player.group !== "yin") {
 				return false;
 			}
-			// 不因“夜班”插入的额外回合而再次链式触发
-			if (event.wba_yeban_extra) {
-				return false;
-			}
 			const uses = player.getHistory("useCard", evt => !!evt.getParent("phaseUse"));
 			if (uses.length < 2) {
 				return false;
@@ -335,22 +334,19 @@ export const skill = {
 		},
 		async content(event, trigger, player) {
 			game.log(player, "发动“夜班”，进行一个额外的回合");
-			const ev = player.insertPhase();
-			if (ev) {
-				ev.wba_yeban_extra = true;
-			}
+			player.insertPhase();
 		},
 	},
 };
 
 export const translate = {
 	/* 武将名 */
-	wba_gong_dahuang: "工大黄",
+	wba_gong_dahuang: "工黄彦瑞",
 	wba_gong_songyijian: "工宋轶健",
 
-	/* 工大黄 */
+	/* 工黄彦瑞 */
 	wba_duwu: "睹物",
-	wba_duwu_info: "当你受到伤害时，你可以进行一次判定，并将判定牌置于一名角色的武将牌上，称为“奶”。每获得一张“奶”，该角色的体力上限+1。",
+	wba_duwu_info: "当你受到伤害时，你可以进行一次判定，并将判定牌置于一名角色的武将牌上，称为“奶”。该角色的体力上限根据其武将牌上“奶”的数量而增减：每有一张“奶”，体力上限+1；若“奶”被移除，体力上限相应减少。",
 	wba_nai_mark: "奶",
 	wba_nai_mark_info: "你的武将牌上有“奶”牌。",
 	wba_siren: "思人",

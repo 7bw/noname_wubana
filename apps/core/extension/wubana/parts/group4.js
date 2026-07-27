@@ -3,51 +3,51 @@ import { lib, game, ui, get, ai, _status } from "noname";
 export const character = {
 	wba_chenjiahao: {
 		sex: "male",
-		group: "wei",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_jilao", "wba_heidong"],
 	},
 	wba_chenkaihua: {
 		sex: "male",
-		group: "wu",
+		group: "xue",
 		hp: 5,
 		// 初始仅有“向日”；“开花”在“日”达到3张时由“向日”授予（衍生技）
 		skills: ["wba_xiangri"],
 	},
 	wba_chenyi: {
 		sex: "male",
-		group: "wei",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_banfei", "wba_xidu"],
 	},
 	wba_hezhizhao: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_nianjing", "wba_foxin"],
 	},
 	wba_dushiyu: {
 		sex: "male",
-		group: "wei",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_tuoxie", "wba_moha"],
 	},
 	wba_dahuang: {
 		sex: "male",
-		group: "qun",
+		group: "xue",
 		hp: 2,
 		// 初始仅有“肺炸”；“法克鱿”“你爸爸”由“肺炸”在濒死时授予（衍生技）
 		skills: ["wba_feizha"],
 	},
 	wba_libowei: {
 		sex: "male",
-		group: "wei",
+		group: "xue",
 		hp: 4,
 		skills: ["wba_beishi", "wba_xiaohua"],
 	},
 	wba_qizhiyue: {
-		sex: "female",
-		group: "qun",
+		sex: "male",
+		group: "xue",
 		hp: 3,
 		skills: ["wba_huaxin", "wba_biaozhun", "wba_manizenmele"],
 	},

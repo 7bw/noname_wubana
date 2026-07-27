@@ -282,10 +282,13 @@ export const skill = {
 	},
 
 	/* ============ 神黄彦瑞 ============ */
-	// 借箭：被单独指定为一张牌的目标时，可判定：红色→置为“箭”；梅花→摸牌；黑桃→可使该牌对你无效
+	// 借箭：被其他角色单独指定为一张牌的目标时，可判定：红色→置为“箭”；梅花→摸牌；黑桃→可使该牌对你无效
 	wba_jiejian: {
 		trigger: { target: "useCardToTargeted" },
 		filter(event, player) {
+			if (event.player === player) {
+				return false;
+			}
 			const parent = event.getParent();
 			return parent && Array.isArray(parent.targets) && parent.targets.length === 1 && event.target === player;
 		},
@@ -402,20 +405,20 @@ export const skill = {
 	/* ============ 神宋轶健 ============ */
 	// 摸鱼：手牌/体力/装备为全场最多时，可分别跳过摸牌/出牌/弃牌阶段（记录跳过阶段数供加班使用）
 	wba_moyu: {
-		trigger: { player: ["phaseBegin", "phaseDrawBegin", "phaseUseBegin", "phaseDiscardBegin"] },
+		trigger: { player: ["phaseBegin", "phaseDrawBefore", "phaseUseBefore", "phaseDiscardBefore"] },
 		direct: true,
 		filter(event, player) {
 			const tn = event.triggername;
 			if (tn === "phaseBegin") {
 				return true;
 			}
-			if (tn === "phaseDrawBegin") {
+			if (tn === "phaseDrawBefore") {
 				return !game.hasPlayer(cur => cur !== player && cur.countCards("h") > player.countCards("h"));
 			}
-			if (tn === "phaseUseBegin") {
+			if (tn === "phaseUseBefore") {
 				return !game.hasPlayer(cur => cur !== player && cur.getHp() > player.getHp());
 			}
-			if (tn === "phaseDiscardBegin") {
+			if (tn === "phaseDiscardBefore") {
 				return player.countCards("e") > 0 && !game.hasPlayer(cur => cur !== player && cur.countCards("e") > player.countCards("e"));
 			}
 			return false;
@@ -426,7 +429,7 @@ export const skill = {
 				player.storage.wba_moyu_skip = 0;
 				return;
 			}
-			const map = { phaseDrawBegin: "摸牌阶段", phaseUseBegin: "出牌阶段", phaseDiscardBegin: "弃牌阶段" };
+			const map = { phaseDrawBefore: "摸牌阶段", phaseUseBefore: "出牌阶段", phaseDiscardBefore: "弃牌阶段" };
 			const r = await player
 				.chooseBool("摸鱼：是否跳过" + map[tn] + "？")
 				.set("ai", () => false)
@@ -439,7 +442,7 @@ export const skill = {
 			}
 		},
 	},
-	// 加班：结束阶段，可选一项：1.摸X+1张牌；2.从至多X名角色手牌各抽一张。之后进行一个额外的出牌阶段
+	// 加班：结束阶段，可选一项：1.摸X张牌；2.从至多X名角色手牌各抽一张。之后进行一个额外的出牌阶段
 	wba_jiaban: {
 		trigger: { player: "phaseJieshuBegin" },
 		async cost(event, trigger, player) {
@@ -453,14 +456,16 @@ export const skill = {
 			let index = 0;
 			if (X > 0) {
 				const r = await player
-					.chooseControl("摸" + (X + 1) + "张牌", "从至多" + X + "名角色手牌中各抽取一张牌")
+					.chooseControl("摸" + X + "张牌", "从至多" + X + "名角色手牌中各抽取一张牌")
 					.set("prompt", "加班：请选择一项")
 					.set("ai", () => 0)
 					.forResult();
 				index = r.index;
 			}
 			if (index === 0) {
-				await player.draw(X + 1);
+				if (X > 0) {
+					await player.draw(X);
+				}
 			} else {
 				const r2 = await player
 					.chooseTarget("加班：从至多" + X + "名角色的手牌中各抽取一张牌", (card, p, target) => target !== p && target.countCards("h") > 0)
@@ -607,7 +612,7 @@ export const translate = {
 	wba_xiaxiao_info: "结束阶段，若本回合你打出或使用的手牌花色数量大于你的体力值，则你可以选择一项：1.摸四张牌并将武将牌翻面；2.弃置一张红色花色的手牌并回复一点体力。",
 
 	wba_jiejian: "借箭",
-	wba_jiejian_info: "每当你被“单独”指定为一张牌的目标时，你可以进行一次判定：若结果为红色，你将判定牌置于武将牌上，称为“箭”；若为梅花，你摸一张牌；若为黑桃，你可以使这张以你为目标的牌对你无效。",
+	wba_jiejian_info: "每当你被其他角色单独指定为一张牌的目标时，你可以进行一次判定：若结果为红色，你将判定牌置于武将牌上，称为“箭”；若为梅花，你摸一张牌；若为黑桃，你可以使这张以你为目标的牌对你无效。",
 	wba_fangjian: "放箭",
 	wba_fangjian_info: "出牌阶段，你可以将任意数量的“箭”当作【万箭齐发】使用。",
 	wba_jiaoyou: "跤友",
@@ -616,7 +621,7 @@ export const translate = {
 	wba_moyu: "摸鱼",
 	wba_moyu_info: "若你的手牌数为全场最多，你可以跳过摸牌阶段；若你的体力值为全场最多，你可以跳过出牌阶段；若你的装备区里有牌且数量为全场最多，你可以跳过弃牌阶段。",
 	wba_jiaban: "加班",
-	wba_jiaban_info: "结束阶段，你可以选择一项：1.摸X+1张牌（X为本回合你跳过的阶段数量）；2.从至多X名角色手牌中各抽取一张牌。之后你进行一个额外的出牌阶段。",
+	wba_jiaban_info: "回合结束阶段，你可以选择一项：1.摸X张牌；2.从至多X名角色手牌中各抽取一张牌；（X为本回合内你跳过的阶段数量），之后你进行一个额外的出牌阶段。",
 	wba_bailan: "摆烂",
 	wba_bailan_info: "结束阶段，若本回合你没有跳过任一阶段，你可以选择一名角色，视为对其使用一张无距离限制的杀。",
 
