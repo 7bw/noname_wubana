@@ -157,15 +157,11 @@ export const skill = {
 		filter(event, player) {
 			return player.getExpansions("wba_bi").length > 0 && game.hasPlayer(cur => cur !== player);
 		},
-		async cost(event, trigger, player) {
-			event.result = await player
-				.chooseTarget(get.prompt2("wba_cclbzb"), (card, p, target) => target !== p)
-				.set("ai", target => -get.attitude(player, target))
-				.forResult();
+		filterTarget(card, player, target) {
+			return target !== player;
 		},
-		logTarget: "targets",
 		async content(event, trigger, player) {
-			const target = event.targets[0];
+			const target = event.target;
 			const cards = player.getExpansions("wba_bi");
 			if (!cards.length) {
 				return;
@@ -405,7 +401,7 @@ export const skill = {
 			if (player.getEquip(2) || player.getEquip(3) || player.getEquip(4)) {
 				return false;
 			}
-			const evts = player.getHistory("discard", evt => !!evt.getParent("phaseDiscard"));
+			const evts = player.getHistory("lose", evt => !!evt.getParent("phaseDiscard"));
 			let count = 0;
 			for (const evt of evts) {
 				count += (evt.cards || []).length;
@@ -457,7 +453,7 @@ export const skill = {
 			if (!player.getCards("h").includes(card)) {
 				return;
 			}
-			const vcard = get.autoViewAs({ name: "bingliangcunduan" }, [card]);
+			const vcard = get.autoViewAs({ name: "bingliang" }, [card]);
 			await player.useCard(vcard, target, false);
 		},
 		ai: { order: 5, result: { target: -1 } },

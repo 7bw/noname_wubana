@@ -392,17 +392,16 @@ export const skill = {
 	},
 
 	/* ============ 游杜时宇 ============ */
-	// 延迟：出牌阶段，你可以将手牌盖置于武将牌上（不选目标、不结算、不计入次数）；结束阶段依序翻开并结算。
+	// 延迟：锁定技，出牌阶段你使用的手牌会被强制盖置于武将牌上（不选目标、不结算、不计入次数）；结束阶段依序翻开并结算。
 	wba_yanchi: {
 		locked: true,
 		trigger: { player: "useCardBegin" },
 		forced: true,
 		filter(event, player) {
-			return get.position(event.card) === "h" && !!event.getParent("phaseUse");
+			return get.position(event.card) === "h" && _status.currentPhase === player;
 		},
 		async content(event, trigger, player) {
 			const card = trigger.card;
-			trigger.cancel();
 			if (!player.storage.wba_yanchi_list) {
 				player.storage.wba_yanchi_list = [];
 			}
@@ -412,6 +411,7 @@ export const skill = {
 			player.storage.wba_yanchi_list.push(card);
 			player.markSkill("wba_yanchi");
 			game.log(player, "将", card, "“延迟”盖置于武将牌上");
+			trigger.cancel();
 		},
 		group: ["wba_yanchi_resolve"],
 		marktext: "延",
