@@ -400,20 +400,17 @@ export const skill = {
 		filter(event, player) {
 			return get.position(event.card) === "h" && _status.currentPhase === player;
 		},
+		// 这里只做同步操作，cancel() 是唯一/最后一句：cancel() 会强制 finish 掉仍处于
+		// #inContent 中的祖先 arrangeTrigger 事件，若在同一分支里再 await 一个自身会产生
+		// 新触发级联的引擎事件（如 addToExpansion 内部创建的 lose 事件，可被任意角色的
+		// loseBegin/loseAfter/addToExpansionAfter 监听到），会与已被强制结束的祖先上下文
+		// 冲突，导致静默卡死（不报错、控制台无输出）。真正的盖置动作挪到 useCardCancelled
+		// 子技能里执行，那是 cancel() 自己触发的一次全新、非嵌套的 arrangeTrigger 流程。
 		async content(event, trigger, player) {
-			const card = trigger.card;
-			if (!player.storage.wba_yanchi_list) {
-				player.storage.wba_yanchi_list = [];
-			}
-			const next = player.addToExpansion([card], player, "give");
-			next.gaintag.add("wba_yanchi");
-			await next;
-			player.storage.wba_yanchi_list.push(card);
-			player.markSkill("wba_yanchi");
-			game.log(player, "将", card, "“延迟”盖置于武将牌上");
+			trigger._wba_yanchi_cover = trigger.card;
 			trigger.cancel();
 		},
-		group: ["wba_yanchi_resolve"],
+		group: ["wba_yanchi_resolve", "wba_yanchi_cover"],
 		marktext: "延",
 		intro: {
 			markcount(storage, player) {
@@ -425,6 +422,29 @@ export const skill = {
 			},
 		},
 		subSkill: {
+			cover: {
+				locked: true,
+				forced: true,
+				silent: true,
+				popup: false,
+				trigger: { player: "useCardCancelled" },
+				filter(event, player) {
+					return event._wba_yanchi_cover === event.card && get.position(event.card) === "h" && _status.currentPhase === player;
+				},
+				async content(event, trigger, player) {
+					const card = trigger._wba_yanchi_cover;
+					delete trigger._wba_yanchi_cover;
+					if (!player.storage.wba_yanchi_list) {
+						player.storage.wba_yanchi_list = [];
+					}
+					const next = player.addToExpansion([card], player, "give");
+					next.gaintag.add("wba_yanchi");
+					await next;
+					player.storage.wba_yanchi_list.push(card);
+					player.markSkill("wba_yanchi");
+					game.log(player, "将", card, "“延迟”盖置于武将牌上");
+				},
+			},
 			resolve: {
 				trigger: { player: "phaseJieshuBegin" },
 				forced: true,

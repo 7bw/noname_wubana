@@ -241,25 +241,30 @@ export const skill = {
 	},
 	// 雨神：你可以将“雨”当作“水淹七军”打出。
 	// 注：【水淹七军】(shuiyanqijunx) 仅在“国战”卡包中定义，非国战模式下 lib.card.shuiyanqijunx 为空，此技能会自动不可用。
+	// 实现参考“放箭”（group3.js wba_fangjian）：expansion 区（position: "x"）的牌无法通过
+	// enable:"chooseToUse" + filterCard/position 的声明式选牌 UI 弹出，只能手动 chooseButton 选牌
+	// 再 get.autoViewAs 构造成牌使用。
 	wba_yushen: {
-		enable: "chooseToUse",
+		enable: "phaseUse",
 		filter(event, player) {
-			return Boolean(lib.card.shuiyanqijunx) && player.getExpansions("wba_yu").some(card => event.filterCard(card, player, event));
-		},
-		filterCard(card, player) {
-			return player.getExpansions("wba_yu").includes(card);
-		},
-		position: "x",
-		selectCard: 1,
-		viewAs: { name: "shuiyanqijunx" },
-		viewAsFilter(player) {
 			return Boolean(lib.card.shuiyanqijunx) && player.getExpansions("wba_yu").length > 0;
 		},
-		prompt: "将“雨”当【水淹七军】使用",
-		check(card) {
-			return 6 - get.value(card);
+		async content(event, trigger, player) {
+			const yu = player.getExpansions("wba_yu");
+			const r = await player
+				.chooseButton(["雨神：将一张“雨”当【水淹七军】使用", yu], true)
+				.set("ai", button => 6 - get.value(button.link))
+				.forResult();
+			if (!r || !r.bool || !r.links || !r.links.length) {
+				return;
+			}
+			const card = get.autoViewAs({ name: "shuiyanqijunx", isCard: true }, [r.links[0]]);
+			await player.chooseUseTarget(card, true, false);
 		},
-		ai: { order: 7 },
+		ai: {
+			order: 7,
+			result: { player: 1 },
+		},
 	},
 	// 预知：当你在回合外失去牌时，你可以观看一名角色的X张手牌，并将你失去的牌与其中一张牌对换（X为“雨”的数量）。
 	wba_yuzhi: {
@@ -415,7 +420,7 @@ export const skill = {
 				.forResult();
 		},
 		async content(event, trigger, player) {
-			await game.asyncDoAsyncInOrder(game.filterPlayer(), p => p.loseHp());
+			await game.doAsyncInOrder(game.filterPlayer(), p => p.loseHp());
 		},
 	},
 
@@ -453,8 +458,7 @@ export const skill = {
 			if (!player.getCards("h").includes(card)) {
 				return;
 			}
-			const vcard = get.autoViewAs({ name: "bingliang" }, [card]);
-			await player.useCard(vcard, target, false);
+			await target.addJudge("bingliang", [card]);
 		},
 		ai: { order: 5, result: { target: -1 } },
 	},
