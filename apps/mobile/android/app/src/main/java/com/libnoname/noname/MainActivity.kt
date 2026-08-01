@@ -18,10 +18,6 @@ class MainActivity : BridgeActivity() {
         registerPlugin(SafFsPlugin::class.java)
 
         val webView = bridge.webView
-        if (BuildConfig.DEBUG) {
-            webView.loadUrl("http://10.0.2.2:8080")
-            return
-        }
 
         val assetLoader = WebViewAssetLoader.Builder()
             .setDomain("localhost")
