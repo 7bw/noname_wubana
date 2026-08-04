@@ -162,7 +162,7 @@ export const skill = {
 		charlotte: true,
 		trigger: { player: "useCard1" },
 		filter(event, player) {
-			return get.type(event.card, null, false) === "basic" && !!event.getParent("phaseUse");
+			return get.type(event.card, null, false) === "basic" && !!event.getParent("phaseUse", true);
 		},
 		forced: true,
 		popup: false,
@@ -320,7 +320,7 @@ export const skill = {
 			if (player.group !== "yin") {
 				return false;
 			}
-			const uses = player.getHistory("useCard", evt => !!evt.getParent("phaseUse"));
+			const uses = player.getHistory("useCard", evt => !!evt.getParent("phaseUse", true));
 			if (uses.length < 2) {
 				return false;
 			}

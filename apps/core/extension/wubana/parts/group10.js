@@ -258,7 +258,11 @@ export const skill = {
 			if (!r || !r.bool || !r.links || !r.links.length) {
 				return;
 			}
-			const card = get.autoViewAs({ name: "shuiyanqijunx", isCard: true }, [r.links[0]]);
+			const chosen = r.links[0];
+			// chooseUseTarget 不会像声明式 viewAs 技能那样自动消耗扩展区里作为“代价”的原始牌，
+			// 必须手动移除，否则“雨”永远不会减少，可以无限使用。
+			await player.loseToDiscardpile([chosen]);
+			const card = get.autoViewAs({ name: "shuiyanqijunx", isCard: true }, [chosen]);
 			await player.chooseUseTarget(card, true, false);
 		},
 		ai: {
@@ -406,7 +410,15 @@ export const skill = {
 			if (player.getEquip(2) || player.getEquip(3) || player.getEquip(4)) {
 				return false;
 			}
-			const evts = player.getHistory("lose", evt => !!evt.getParent("phaseDiscard"));
+			// getParent(name) 不传 forced:true 时，找不到匹配祖先会返回一个真值的空对象 {}
+			// 而非 undefined，所以必须显式传 forced:true，否则等于没做任何祖先过滤。
+			const evts = player.getHistory("lose", evt => {
+				if (evt.type !== "discard") {
+					return false;
+				}
+				const p = evt.getParent("phaseDiscard", true);
+				return !!p && p.player === player;
+			});
 			let count = 0;
 			for (const evt of evts) {
 				count += (evt.cards || []).length;

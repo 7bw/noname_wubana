@@ -189,7 +189,7 @@ export const skill = {
 			return get.type(event.card) != null;
 		},
 		async content(event, trigger, player) {
-			const phaseUse = trigger.getParent("phaseUse");
+			const phaseUse = trigger.getParent("phaseUse", true);
 			const stored = player.storage.wba_jigu;
 			let last = null;
 			if (stored && stored.phaseUse == phaseUse) {

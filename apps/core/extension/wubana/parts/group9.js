@@ -275,9 +275,9 @@ export const skill = {
 					await target.damage(x - 1, "fire", player);
 				}
 			}
-			if (_status.currentPhase === player && _status.event.getParent("phaseUse")) {
+			if (_status.currentPhase === player && _status.event.getParent("phaseUse", true)) {
 				player.skip("phaseDiscard");
-				const pu = _status.event.getParent("phaseUse");
+				const pu = _status.event.getParent("phaseUse", true);
 				if (pu) {
 					pu.finish();
 				}
@@ -392,25 +392,46 @@ export const skill = {
 	},
 
 	/* ============ 游杜时宇 ============ */
-	// 延迟：锁定技，出牌阶段你使用的手牌会被强制盖置于武将牌上（不选目标、不结算、不计入次数）；结束阶段依序翻开并结算。
+	// 延迟：出牌阶段你的手牌无法正常使用（mod.cardEnabled 禁用），只能通过本技能将其盖置于武将牌上；
+	// 结束阶段依序翻开并结算。
+	// 注：没有直接监听/取消真实的 useCard 事件——那条路径已验证过会导致协程式事件循环静默卡死
+	// （cancel() 会强制 finish 仍在执行中的祖先触发事件，此时若再 await 一个会产生新触发级联的
+	// 引擎事件，如 addToExpansion 内部创建的 lose 事件，会与被强制结束的祖先上下文冲突）。
+	// 改为从源头禁用出牌阶段手牌的正常使用，配合原版（v1.2）已验证可用的主动技选牌逻辑，
+	// 达到等价效果且完全不碰 useCard/useCardBegin/cancel() 这条危险路径。
 	wba_yanchi: {
-		locked: true,
-		trigger: { player: "useCardBegin" },
-		forced: true,
+		mod: {
+			cardEnabled(card, player) {
+				if (_status.currentPhase === player && get.position(card) === "h") {
+					return false;
+				}
+			},
+		},
+		enable: "phaseUse",
+		filterCard: true,
+		selectCard: 1,
+		position: "h",
+		discard: false,
+		lose: false,
 		filter(event, player) {
-			return get.position(event.card) === "h" && _status.currentPhase === player;
+			return player.countCards("h") > 0;
 		},
-		// 这里只做同步操作，cancel() 是唯一/最后一句：cancel() 会强制 finish 掉仍处于
-		// #inContent 中的祖先 arrangeTrigger 事件，若在同一分支里再 await 一个自身会产生
-		// 新触发级联的引擎事件（如 addToExpansion 内部创建的 lose 事件，可被任意角色的
-		// loseBegin/loseAfter/addToExpansionAfter 监听到），会与已被强制结束的祖先上下文
-		// 冲突，导致静默卡死（不报错、控制台无输出）。真正的盖置动作挪到 useCardCancelled
-		// 子技能里执行，那是 cancel() 自己触发的一次全新、非嵌套的 arrangeTrigger 流程。
+		check(card) {
+			return get.value(card) <= 6 ? 6 - get.value(card) : 0.1 + (get.tag(card, "damage") ? 3 : 0);
+		},
 		async content(event, trigger, player) {
-			trigger._wba_yanchi_cover = trigger.card;
-			trigger.cancel();
+			const card = event.cards[0];
+			if (!player.storage.wba_yanchi_list) {
+				player.storage.wba_yanchi_list = [];
+			}
+			const next = player.addToExpansion([card], player, "give");
+			next.gaintag.add("wba_yanchi");
+			await next;
+			player.storage.wba_yanchi_list.push(card);
+			player.markSkill("wba_yanchi");
+			game.log(player, "将", card, "“延迟”盖置于武将牌上");
 		},
-		group: ["wba_yanchi_resolve", "wba_yanchi_cover"],
+		group: ["wba_yanchi_resolve"],
 		marktext: "延",
 		intro: {
 			markcount(storage, player) {
@@ -421,30 +442,11 @@ export const skill = {
 				return n ? "武将牌上盖置了" + get.cnNumber(n) + "张“延迟”牌" : "没有“延迟”牌";
 			},
 		},
+		ai: {
+			order: 1,
+			result: { player: 1 },
+		},
 		subSkill: {
-			cover: {
-				locked: true,
-				forced: true,
-				silent: true,
-				popup: false,
-				trigger: { player: "useCardCancelled" },
-				filter(event, player) {
-					return event._wba_yanchi_cover === event.card && get.position(event.card) === "h" && _status.currentPhase === player;
-				},
-				async content(event, trigger, player) {
-					const card = trigger._wba_yanchi_cover;
-					delete trigger._wba_yanchi_cover;
-					if (!player.storage.wba_yanchi_list) {
-						player.storage.wba_yanchi_list = [];
-					}
-					const next = player.addToExpansion([card], player, "give");
-					next.gaintag.add("wba_yanchi");
-					await next;
-					player.storage.wba_yanchi_list.push(card);
-					player.markSkill("wba_yanchi");
-					game.log(player, "将", card, "“延迟”盖置于武将牌上");
-				},
-			},
 			resolve: {
 				trigger: { player: "phaseJieshuBegin" },
 				forced: true,
@@ -734,14 +736,14 @@ export const skill = {
 		silent: true,
 		popup: false,
 		filter(event, player) {
-			if (!event.getParent("phaseUse")) {
+			if (!event.getParent("phaseUse", true)) {
 				return false;
 			}
-			const used = player.getHistory("useCard", evt => !!evt.getParent("phaseUse")).length;
+			const used = player.getHistory("useCard", evt => !!evt.getParent("phaseUse", true)).length;
 			return used >= Math.max(1, player.getHp());
 		},
 		async content(event, trigger, player) {
-			const pu = trigger.getParent("phaseUse");
+			const pu = trigger.getParent("phaseUse", true);
 			if (pu) {
 				pu.finish();
 			}
@@ -778,7 +780,7 @@ export const translate = {
 
 	/* 游杜时宇 */
 	wba_yanchi: "延迟",
-	wba_yanchi_info: "锁定技，出牌阶段，你使用的手牌不选择目标且不执行结算，改为依序背面朝上盖置于你的武将牌上（以此法盖置【杀】不计入次数限制）。你的回合结束阶段开始时，你将“延迟”盖置的牌依序翻开，为其选择合法目标并依次结算；若无法指定有效目标，则直接置入弃牌堆。",
+	wba_yanchi_info: "出牌阶段，你的手牌无法正常使用，你可以将其中一张不选择目标、不执行结算，改为背面朝上盖置于你的武将牌上（以此法盖置【杀】不计入次数限制），可反复发动。你的回合结束阶段开始时，你将“延迟”盖置的牌依序翻开，为其选择合法目标并依次结算；若无法指定有效目标，则直接置入弃牌堆。",
 	wba_yanchi_resolve: "延迟",
 	wba_qiaojiang: "巧匠",
 	wba_qiaojiang_info: "回合结束阶段，每当一张“延迟”盖置的牌被翻开并成功执行结算后，你可以选择一名其他角色从牌堆中获得一张相同类型的牌加入手牌。若该牌为装备牌，该角色可选择将其直接置入装备区。",
