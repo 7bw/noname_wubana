@@ -450,7 +450,9 @@ export const skill = {
 		discard: false,
 		lose: false,
 		filterTarget(card, player, target) {
-			return target !== player;
+			// 兵粮寸断是延时锦囊，同一名角色的判定区不能同时存在两张；否则电脑会对同一目标
+			// 连续发动本技能，导致同一人身上叠好几张“兵粮寸断”。
+			return target !== player && target.canAddJudge("bingliang", player);
 		},
 		check(card) {
 			return 6 - get.value(card);

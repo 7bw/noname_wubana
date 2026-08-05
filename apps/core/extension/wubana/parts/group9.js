@@ -402,7 +402,11 @@ export const skill = {
 	wba_yanchi: {
 		mod: {
 			cardEnabled(card, player) {
-				if (_status.currentPhase === player && get.position(card) === "h") {
+				// _status.currentPhase 在整个回合内（含结束阶段）都等于 player，必须额外确认
+				// 确实处于 phaseUse 事件内，否则回合结束阶段“延迟”翻牌结算时，canUse/hasUseTarget
+				// 会被这条 mod 连带禁用，导致所有翻出来的牌都判定为“无法指定目标”而被弃置。
+				// 另外 getParent(name) 不传 forced:true 时找不到匹配祖先会返回真值空对象，必须显式传。
+				if (_status.currentPhase === player && get.position(card) === "h" && _status.event.getParent("phaseUse", true)) {
 					return false;
 				}
 			},

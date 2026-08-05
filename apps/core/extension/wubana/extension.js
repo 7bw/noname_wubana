@@ -70,7 +70,7 @@ export default function () {
 			author: "五班",
 			diskURL: "",
 			forumURL: "",
-			version: "1.3.4",
+			version: "1.3.5",
 		},
 		files: { character: [], card: [], skill: [], audio: [] },
 	};
