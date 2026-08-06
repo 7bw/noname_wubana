@@ -103,8 +103,22 @@ export const skill = {
 			}
 			// 简化：游戏开始时（或化身为空时兜底）随机获得两张未加入游戏的武将牌
 			if (event.triggername === "gameStart" || player.storage.wba_mofang.length === 0) {
+				// 不排除 wba_ 前缀的武将——之前排除了整个 wubana 扩展自己的 57 名武将，
+				// 若房间只启用了 wubana 扩展，候选池会直接变空，导致本技能彻底不起效。
+				// 同时直接按“是否有可声明的技能”过滤（而非“是否有任意技能”），与后面
+				// 声明技能时的判定条件保持一致。
 				const pool = get.gainableCharacters((info, name) => {
-					return Array.isArray(info[3]) && info[3].length > 0 && !String(name).startsWith("wba_");
+					if (!Array.isArray(info[3]) || !info[3].length) {
+						return false;
+					}
+					return info[3].some(skill => {
+						const skillInfo = get.info(skill);
+						if (!skillInfo) {
+							return false;
+						}
+						const cats = get.skillCategoriesOf(skill, player);
+						return !cats.some(t => ["限定技", "觉醒技", "主公技"].includes(t));
+					});
 				});
 				game.players.concat(game.dead).forEach(cur => {
 					pool.remove(cur.name);
@@ -200,7 +214,17 @@ export const skill = {
 				player.storage.wba_mofang = [];
 			}
 			const pool = get.gainableCharacters((info, name) => {
-				return Array.isArray(info[3]) && info[3].length > 0 && !String(name).startsWith("wba_");
+				if (!Array.isArray(info[3]) || !info[3].length) {
+					return false;
+				}
+				return info[3].some(skill => {
+					const skillInfo = get.info(skill);
+					if (!skillInfo) {
+						return false;
+					}
+					const cats = get.skillCategoriesOf(skill, player);
+					return !cats.some(t => ["限定技", "觉醒技", "主公技"].includes(t));
+				});
 			});
 			game.players.concat(game.dead).forEach(cur => {
 				pool.remove(cur.name);

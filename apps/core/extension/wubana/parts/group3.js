@@ -403,43 +403,54 @@ export const skill = {
 	},
 
 	/* ============ 神宋轶健 ============ */
-	// 摸鱼：手牌/体力/装备为全场最多时，可分别跳过摸牌/出牌/弃牌阶段（记录跳过阶段数供加班使用）
+	// 摸鱼：手牌/体力/装备为全场最多时，可分别跳过摸牌/出牌/弃牌阶段。
+	// 实现完全比照标准包朱桓“奋励”（fenli）的结构：不用 direct/自行 chooseBool，
+	// 而是不设 cost，靠引擎在没有 cost 且非 forced/direct 时自动生成的确认框（prompt），
+	// content 里只做同步的 trigger.cancel()，不在其前后夹杂任何 await——这是目前
+	// 唯一验证过安全、能真正跳过阶段的写法。跳过次数不用自己记账，cancel() 本身就会把
+	// 阶段名写入 player.getHistory("skipped")（标准包“平寇”读的就是这个），加班直接读它。
 	wba_moyu: {
-		trigger: { player: ["phaseBegin", "phaseDrawBefore", "phaseUseBefore", "phaseDiscardBefore"] },
-		direct: true,
-		filter(event, player) {
-			const tn = event.triggername;
-			if (tn === "phaseBegin") {
-				return true;
-			}
-			if (tn === "phaseDrawBefore") {
-				return !game.hasPlayer(cur => cur !== player && cur.countCards("h") > player.countCards("h"));
-			}
-			if (tn === "phaseUseBefore") {
-				return !game.hasPlayer(cur => cur !== player && cur.getHp() > player.getHp());
-			}
-			if (tn === "phaseDiscardBefore") {
-				return player.countCards("e") > 0 && !game.hasPlayer(cur => cur !== player && cur.countCards("e") > player.countCards("e"));
-			}
-			return false;
-		},
-		async content(event, trigger, player) {
-			const tn = event.triggername;
-			if (tn === "phaseBegin") {
-				player.storage.wba_moyu_skip = 0;
-				return;
-			}
-			const map = { phaseDrawBefore: "摸牌阶段", phaseUseBefore: "出牌阶段", phaseDiscardBefore: "弃牌阶段" };
-			const r = await player
-				.chooseBool("摸鱼：是否跳过" + map[tn] + "？")
-				.set("ai", () => false)
-				.forResult();
-			if (r && r.bool) {
-				player.logSkill("wba_moyu");
-				trigger.cancel();
-				player.storage.wba_moyu_skip = (player.storage.wba_moyu_skip || 0) + 1;
-				game.log(player, "跳过了", "#y" + map[tn]);
-			}
+		group: ["wba_moyu_draw", "wba_moyu_use", "wba_moyu_discard"],
+		subSkill: {
+			draw: {
+				trigger: { player: "phaseDrawBefore" },
+				prompt: "摸鱼：是否跳过摸牌阶段？",
+				filter(event, player) {
+					return !game.hasPlayer(cur => cur !== player && cur.countCards("h") > player.countCards("h"));
+				},
+				check(event, player) {
+					return false;
+				},
+				async content(event, trigger, player) {
+					trigger.cancel();
+				},
+			},
+			use: {
+				trigger: { player: "phaseUseBefore" },
+				prompt: "摸鱼：是否跳过出牌阶段？",
+				filter(event, player) {
+					return !game.hasPlayer(cur => cur !== player && cur.getHp() > player.getHp());
+				},
+				check(event, player) {
+					return false;
+				},
+				async content(event, trigger, player) {
+					trigger.cancel();
+				},
+			},
+			discard: {
+				trigger: { player: "phaseDiscardBefore" },
+				prompt: "摸鱼：是否跳过弃牌阶段？",
+				filter(event, player) {
+					return player.countCards("e") > 0 && !game.hasPlayer(cur => cur !== player && cur.countCards("e") > player.countCards("e"));
+				},
+				check(event, player) {
+					return false;
+				},
+				async content(event, trigger, player) {
+					trigger.cancel();
+				},
+			},
 		},
 	},
 	// 加班：结束阶段，可选一项：1.摸X张牌；2.从至多X名角色手牌各抽一张。之后进行一个额外的出牌阶段
@@ -452,7 +463,7 @@ export const skill = {
 				.forResult();
 		},
 		async content(event, trigger, player) {
-			const X = player.storage.wba_moyu_skip || 0;
+			const X = player.getHistory("skipped").length;
 			let index = 0;
 			if (X > 0) {
 				const r = await player
@@ -495,7 +506,7 @@ export const skill = {
 	wba_bailan: {
 		trigger: { player: "phaseJieshuBegin" },
 		filter(event, player) {
-			if (player.storage.wba_moyu_skip) {
+			if (player.getHistory("skipped").length) {
 				return false;
 			}
 			return game.hasPlayer(cur => player.canUse({ name: "sha", isCard: true }, cur, false));
